@@ -65,7 +65,7 @@ public class TimeEntryControllerTest {
 
     @Test
     public void testRead_NotFound() {
-        long nonExistentTimeEntryId = 1L;
+        long nonExistentTimeEntryId = 10L;
         doReturn(null)
             .when(timeEntryRepository)
             .find(nonExistentTimeEntryId);
@@ -80,6 +80,10 @@ public class TimeEntryControllerTest {
             new TimeEntry(1L, 123L, 456L, LocalDate.parse("2017-01-08"), 8),
             new TimeEntry(2L, 789L, 321L, LocalDate.parse("2017-01-07"), 4)
         );
+/*        TimeEntry timeEntryToCreate1= new TimeEntry(1L, 123L, 456L, LocalDate.parse("2017-01-08"), 8);
+        TimeEntry timeEntryToCreate2= new TimeEntry(2L, 789L, 321L, LocalDate.parse("2017-01-07"), 4);
+        controller.create(timeEntryToCreate1);
+        controller.create(timeEntryToCreate2);*/
         doReturn(expected).when(timeEntryRepository).list();
 
         ResponseEntity<List<TimeEntry>> response = controller.list();
@@ -108,7 +112,7 @@ public class TimeEntryControllerTest {
 
     @Test
     public void testUpdate_NotFound() {
-        long nonExistentTimeEntryId = 1L;
+        long nonExistentTimeEntryId = 10L;
         doReturn(null)
             .when(timeEntryRepository)
             .update(eq(nonExistentTimeEntryId), any(TimeEntry.class));
