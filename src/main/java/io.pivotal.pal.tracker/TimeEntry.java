@@ -21,6 +21,10 @@ public class TimeEntry {
         this.date = date;
         this.hours = hours;
     }
+    public TimeEntry(long timeEntryId, TimeEntry timeEntry) {
+        this(timeEntry.projectId,  timeEntry.userId,  timeEntry.date,  timeEntry.hours);
+        this.id =timeEntryId;
+    }
 
     public long getId() {
         return id;

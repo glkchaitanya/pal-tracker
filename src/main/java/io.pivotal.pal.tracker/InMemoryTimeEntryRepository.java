@@ -31,8 +31,8 @@ public InMemoryTimeEntryRepository(){
         return te_new;
     }
 
-    public TimeEntry find(Long id){
-        return teMap.get(id);
+    public TimeEntry find(Long Id){
+        return teMap.get(Id);
     }
 
     public TimeEntry update(Long id,TimeEntry te){
