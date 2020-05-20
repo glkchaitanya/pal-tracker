@@ -1,66 +1,75 @@
 package io.pivotal.pal.tracker;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/time-entries")
 public class TimeEntryController {
 
-    //TimeEntryRepository tep=new InMemoryTimeEntryRepository();
+    private TimeEntryRepository timeEntriesRepo;
+    private final DistributionSummary timeEntrySummary;
+    private final Counter actionCounter;
 
-    TimeEntryRepository tep;
+    public TimeEntryController(
+            TimeEntryRepository timeEntriesRepo,
+            MeterRegistry meterRegistry
+    ) {
+        this.timeEntriesRepo = timeEntriesRepo;
 
-    public TimeEntryController(TimeEntryRepository timeEntryRepository){
-        this.tep=timeEntryRepository;
-
+        timeEntrySummary = meterRegistry.summary("timeEntry.summary");
+        actionCounter = meterRegistry.counter("timeEntry.actionCounter");
     }
+
     @PostMapping
-    public ResponseEntity create(@RequestBody TimeEntry timeEntry){
+    public ResponseEntity<TimeEntry> create(@RequestBody TimeEntry timeEntry) {
+        TimeEntry createdTimeEntry = timeEntriesRepo.create(timeEntry);
+        actionCounter.increment();
+        timeEntrySummary.record(timeEntriesRepo.list().size());
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(tep.create(timeEntry));
+        return new ResponseEntity<>(createdTimeEntry, HttpStatus.CREATED);
     }
+
     @GetMapping("{id}")
-    public ResponseEntity read(@PathVariable Long id){
-        TimeEntry found_TE = tep.find(id);
-        if (found_TE == null) return new ResponseEntity<>(found_TE, HttpStatus.NOT_FOUND);
-        else return new ResponseEntity<>(found_TE, HttpStatus.OK);
-
-    }
-
-    @PutMapping("{id}")
-    public ResponseEntity update(@PathVariable Long id,@RequestBody TimeEntry te){
-
-        TimeEntry updated_TE = tep.update(id, te);
-        if (updated_TE == null) {
+    public ResponseEntity<TimeEntry> read(@PathVariable Long id) {
+        TimeEntry timeEntry = timeEntriesRepo.find(id);
+        if (timeEntry != null) {
+            actionCounter.increment();
+            return new ResponseEntity<>(timeEntry, HttpStatus.OK);
+        } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(updated_TE, HttpStatus.OK);
-       /* if(tep.find(id)!=null) {
-            return ResponseEntity.status(HttpStatus.OK).body(tep.update(id, te));
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-*/
     }
 
     @GetMapping
-    public ResponseEntity list(){
-        return ResponseEntity.status(HttpStatus.OK).body(tep.list());
+    public ResponseEntity<List<TimeEntry>> list() {
+        actionCounter.increment();
+        return new ResponseEntity<>(timeEntriesRepo.list(), HttpStatus.OK);
     }
+
+    @PutMapping("{id}")
+    public ResponseEntity<TimeEntry> update(@PathVariable Long id, @RequestBody TimeEntry timeEntry) {
+        TimeEntry updatedTimeEntry = timeEntriesRepo.update(id, timeEntry);
+        if (updatedTimeEntry != null) {
+            actionCounter.increment();
+            return new ResponseEntity<>(updatedTimeEntry, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
     @DeleteMapping("{id}")
-    public ResponseEntity delete(@PathVariable Long id){
-        //if(tep.find(id)!=null) {
-            tep.delete(id);
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(null);
+    public ResponseEntity delete(@PathVariable Long id) {
+        timeEntriesRepo.delete(id);
+        actionCounter.increment();
+        timeEntrySummary.record(timeEntriesRepo.list().size());
 
-       // return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
-
-
 }
