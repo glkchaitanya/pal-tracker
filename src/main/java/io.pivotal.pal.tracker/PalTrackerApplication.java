@@ -17,11 +17,11 @@ public class PalTrackerApplication {
 
         SpringApplication.run(PalTrackerApplication.class, args);
     }
-
+/*
     @Bean
     TimeEntryRepository getTimeEntryRepository(DataSource dataSource){
         return new JdbcTimeEntryRepository(dataSource);
-    }
+    }*/
 
     @Bean
     public ObjectMapper jsonObjectMapper() {
